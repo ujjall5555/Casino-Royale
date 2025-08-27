@@ -1,0 +1,100 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lucky Spin — Mini Casino</title>
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; background:#0b1220; color:#fff; }
+    .wrap { max-width:800px; margin:auto; padding:20px; }
+    .status { margin-bottom:10px; }
+    .reels { display:flex; justify-content:space-between; background:#111; padding:20px; border-radius:10px; }
+    .col { background:#222; padding:10px; border-radius:6px; width:30%; text-align:center; font-size:40px; }
+    .controls { margin-top:15px; }
+    .controls button { margin:5px; padding:10px 15px; border:none; border-radius:6px; cursor:pointer; font-weight:bold; }
+    .primary { background:#58c4ff; color:#000; }
+    .danger { background:#ff6b6b; color:#000; }
+    .ghost { background:#444; color:#fff; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>🎰 Lucky Spin</h1>
+    <div class="status">
+      Balance: <span id="balance"></span> | Bet: <span id="betLabel"></span> | Last Win: <span id="lastWin"></span>
+    </div>
+    <div class="reels" id="reels"></div>
+    <div class="controls">
+      <button class="ghost" id="decBet">−</button>
+      <button class="ghost" id="incBet">+</button>
+      <button class="primary" id="spin">SPIN</button>
+      <button class="danger" id="reset">Reset</button>
+    </div>
+  </div>  <script>
+    const START_BALANCE = 1000;
+    const BET_STEPS = [1,2,5,10,20,50,100];
+    const SYMBOLS = [
+      { id:'cherry', emoji:'🍒', payout:5 },
+      { id:'lemon', emoji:'🍋', payout:4 },
+      { id:'orange', emoji:'🍊', payout:6 },
+      { id:'grape', emoji:'🍇', payout:8 },
+      { id:'bell', emoji:'🔔', payout:12 },
+      { id:'seven', emoji:'7️⃣', payout:25 },
+      { id:'diamond', emoji:'💎', payout:40 },
+      { id:'crown', emoji:'👑', payout:80 }
+    ];
+
+    let balance = +localStorage.getItem('casino.balance') || START_BALANCE;
+    let betIdx = 3;
+
+    const balanceEl = document.getElementById('balance');
+    const betLabel = document.getElementById('betLabel');
+    const lastWinEl = document.getElementById('lastWin');
+    const reelsEl = document.getElementById('reels');
+
+    function format(n){ return n.toLocaleString(); }
+
+    function renderStatus(){
+      balanceEl.textContent = format(balance);
+      betLabel.textContent = BET_STEPS[betIdx];
+      lastWinEl.textContent = 0;
+    }
+
+    function randomSymbol(){
+      return SYMBOLS[Math.floor(Math.random()*SYMBOLS.length)];
+    }
+
+    function renderReels(symbols){
+      reelsEl.innerHTML = '';
+      symbols.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'col';
+        div.textContent = s.emoji;
+        reelsEl.appendChild(div);
+      });
+    }
+
+    function spin(){
+      const bet = BET_STEPS[betIdx];
+      if(balance < bet){ alert('Not enough balance'); return; }
+      balance -= bet;
+      const results = [randomSymbol(), randomSymbol(), randomSymbol()];
+      renderReels(results);
+      let win = 0;
+      if(results[0].id === results[1].id && results[1].id === results[2].id){
+        win = bet * results[0].payout;
+      }
+      balance += win;
+      lastWinEl.textContent = win;
+      localStorage.setItem('casino.balance', balance);
+      renderStatus();
+    }
+
+    document.getElementById('spin').onclick = spin;
+    document.getElementById('incBet').onclick = ()=>{ if(betIdx < BET_STEPS.length-1) betIdx++; renderStatus(); };
+    document.getElementById('decBet').onclick = ()=>{ if(betIdx > 0) betIdx--; renderStatus(); };
+    document.getElementById('reset').onclick = ()=>{ balance = START_BALANCE; renderStatus(); localStorage.setItem('casino.balance', balance); };
+
+    renderStatus();
+    renderReels([randomSymbol(),randomSymbol(),randomSymbol()]);
+  </script></body>
+</html>
